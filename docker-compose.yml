@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: front
+    build:
+      context: ./frontend  # Path to your frontend directory
+    ports:
+      - "80:80"  # Maps port 80 on the host to port 80 in the container
+    depends_on:
+      - backend  # Ensure the backend service is up before frontend starts
+    environment:
+      - VITE_API_URL=http://backend:8080  # Pass the backend URL to the frontend if necessary
+    networks:
+      - backend-network  # Ensure frontend is in the same network as backend
+
+  backend:
+    image: backend
+    build:
+      context: ./backend  # Path to your backend directory
+    ports:
+      - "8080:8080"  # Maps port 8080 on the host to port 8080 in the container
+    depends_on:
+      - mysql  # Ensure MySQL is available before starting the backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod  # Set the Spring profile if needed
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/storeman?createDatabaseIfNotExist=true  # 'mysql' is the service name from Docker Compose
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=  # No password (empty) for MySQL
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver  # MySQL driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.MySQLDialect
+    networks:
+      - backend-network  # Ensure backend is in the same network as MySQL
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysqlcontainer
+    ports:
+      - "3306:3306"  # Maps port 3306 on the host to port 3306 in the container
+    environment:
+      MYSQL_ROOT_PASSWORD: ""  # No password for MySQL
+      MYSQL_DATABASE: storeman  # Create a database named 'storeman'
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  # Allow empty password for MySQL root user
+    volumes:
+      - mysql-data:/var/lib/mysql  # Persists MySQL data across container restarts
+    networks:
+      - backend-network  # Ensure MySQL is on the same network as the backend and frontend
+
+volumes:
+  mysql-data:  # Persists MySQL data
+
+networks:
+  backend-network:  # Custom network for backend services
+    driver: bridge
