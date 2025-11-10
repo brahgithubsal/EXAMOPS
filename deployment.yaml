@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springbackend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: springbackend
+  template:
+    metadata:
+      labels:
+        app: springbackend
+    spec:
+      containers:
+        - name: springbackend
+          image: __IMAGE__@__DIGEST__
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: springbackend
+spec:
+  type: ClusterIP
+  selector:
+    app: springbackend
+  ports:
+    - port: 8080
+      targetPort: 8080
